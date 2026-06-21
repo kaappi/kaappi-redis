@@ -8,14 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
-    services:
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: --health-cmd "redis-cli ping" --health-interval 10s
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -24,10 +17,6 @@ jobs:
         uses: mlugg/setup-zig@v2
         with:
           version: 0.16.0
-
-      - name: Install OpenSSL (Ubuntu)
-        if: runner.os == 'Linux'
-        run: sudo apt-get install -y libssl-dev
 
       - name: Build Kaappi
         run: |
@@ -42,7 +31,7 @@ jobs:
       - name: Build native library
         run: make
 
-      - name: Run RESP tests
+      - name: Run RESP tests (offline)
         run: |
           /tmp/kaappi/zig-out/bin/kaappi \
             --lib-path /tmp/kaappi-net/lib \
@@ -50,14 +39,14 @@ jobs:
             tests/test-resp.scm
         env:
           DYLD_LIBRARY_PATH: ${{ github.workspace }}:/tmp/kaappi-net
-          LD_LIBRARY_PATH: ${{ github.workspace }}:/tmp/kaappi-net
 
-      - name: Run command tests
+      - name: Run command tests (live Redis)
         run: |
+          brew install redis
+          redis-server --daemonize yes
           /tmp/kaappi/zig-out/bin/kaappi \
             --lib-path /tmp/kaappi-net/lib \
             --lib-path lib \
             tests/test-commands.scm
         env:
           DYLD_LIBRARY_PATH: ${{ github.workspace }}:/tmp/kaappi-net
-          LD_LIBRARY_PATH: ${{ github.workspace }}:/tmp/kaappi-net
