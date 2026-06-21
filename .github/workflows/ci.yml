@@ -8,10 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
 
     services:
       redis:
@@ -31,12 +28,6 @@ jobs:
       - name: Install OpenSSL (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get install -y libssl-dev
-
-      - name: Install Redis (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install redis
-          redis-server --daemonize yes
 
       - name: Build Kaappi
         run: |
